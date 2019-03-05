@@ -70,6 +70,14 @@ class ChromaKeyCameraViewController : UIViewController {
     var photoURL : URL!
     var movieURL : URL!
     
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        return UIInterfaceOrientationMask.landscapeRight
+    }
+    
+    override var shouldAutorotate: Bool {
+        return false
+    }
+    
     override func loadView() {
         view = UIView(frame: UIScreen.main.bounds)
         view.backgroundColor = UIColor.green
@@ -80,16 +88,21 @@ class ChromaKeyCameraViewController : UIViewController {
         photoURL = URL(string:"photo.jpg", relativeTo:documentDirectory)
         movieURL = URL(string:"movie.mp4", relativeTo:documentDirectory)
         
-        // delete temporary files
+    }
+    
+    func clearMovieFile() {
         let fileManager = FileManager.default
-        if fileManager.fileExists(atPath: photoURL.path) {
-            try? fileManager.removeItem(atPath: photoURL.path)
-        }
         if fileManager.fileExists(atPath: movieURL.path) {
             try? fileManager.removeItem(atPath: movieURL.path)
         }
     }
     
+    func clearPhotoFile() {
+        let fileManager = FileManager.default
+        if fileManager.fileExists(atPath: photoURL.path) {
+            try? fileManager.removeItem(atPath: photoURL.path)
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -98,6 +111,7 @@ class ChromaKeyCameraViewController : UIViewController {
         renderView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(renderView)
         
+        renderView.fillMode = .preserveAspectRatio
         // make render view fullscreen
         renderView.leadingAnchor.constraint(equalTo: margins.leadingAnchor, constant: -20).isActive = true
         renderView.trailingAnchor.constraint(equalTo: margins.trailingAnchor, constant: 20).isActive = true
@@ -128,23 +142,30 @@ class ChromaKeyCameraViewController : UIViewController {
         
         view.addSubview(closeButton)
     }
-    
+
     func setupInputs () {
-        switch backgroundMode {
-        case .photo:
-            let image = UIImage(contentsOfFile: (URL(string: backgroundPhotoURL)?.path)!)
-            if(image == nil) {
-                print("image is nil, that dont work :(")
+        do {
+            switch backgroundMode {
+            case .photo:
+                let image = UIImage(contentsOfFile: (URL(string: backgroundPhotoURL)?.path)!)
+                if(image == nil) {
+                    delegate?.error(message: "could not load background image")
+                    return
+                }
+                picture = try PictureInput(image: image!)
+            case .video:
+                movie = try MovieInput(url: URL(string:backgroundVideoURL)!, playAtActualSpeed: true, loop: true)
             }
-            picture = try! PictureInput(image: image!)
-        case .video:
-            movie = try! MovieInput(url: URL(string:backgroundVideoURL)!, playAtActualSpeed: true, loop: true)
+            camera = try Camera(sessionPreset:AVCaptureSession.Preset.hd1280x720)
+            blend = ChromaKeyBlend()
+            blend.colorToReplace = color
+            blend.thresholdSensitivity = threshold
+            blend.smoothing = smoothing
         }
-        camera = try! Camera(sessionPreset:AVCaptureSession.Preset.photo)
-        blend = ChromaKeyBlend()
-        blend.colorToReplace = color
-        blend.thresholdSensitivity = threshold
-        blend.smoothing = smoothing
+        catch {
+            delegate?.error(message: "Could not start recording \(error)")
+        }
+
     }
     
     func buildPipeLine () {
@@ -257,10 +278,12 @@ class ChromaKeyCameraViewController : UIViewController {
     }
     
     @objc func startRecordButtonPressed(sender:UIButton) {
+        clearMovieFile()
         playSound(sound:.BeginRecord)
         print("starting record")
         do {
-            movieOutput = try MovieOutput(URL:movieURL, size:Size(width:640, height:480), liveVideo:true)
+            movieOutput = try MovieOutput(URL:movieURL, size:Size(width:1280, height:720), liveVideo:true)
+            
             camera.audioEncodingTarget = movieOutput
             blend.addTarget(movieOutput!)
             movieOutput.startRecording()
@@ -270,7 +293,7 @@ class ChromaKeyCameraViewController : UIViewController {
             stopRecordButton.isHidden = false
             
         } catch {
-            fatalError("Couldn't initialize movie, error: \(error)")
+            delegate?.error(message: "Could not start recording \(error)")
         }
     }
     
@@ -281,6 +304,7 @@ class ChromaKeyCameraViewController : UIViewController {
             self.movieOutput = nil
             self.pausePipeLine()
             
+            // whait for atleast a frame
             DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(75)) {
                 let player = AVPlayer(url: self.movieURL)
                 
@@ -291,6 +315,7 @@ class ChromaKeyCameraViewController : UIViewController {
                 // Modally present the player and call the player's play() method when complete.
                 self.present(controller, animated: false)
             }
+            
         }
         
         stopRecordButton.isHidden = true
@@ -333,18 +358,19 @@ class ChromaKeyCameraViewController : UIViewController {
     }
     
     @objc func photoButtonPressed (sender:UIButton) {
+        clearPhotoFile()
+        
         blend.saveNextFrameToURL(photoURL!, format:.jpeg)
         
         // wait atleast a frame
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(75)) {
             self.pausePipeLine()
             self.playSound(sound:.Shutter)
+            self.photoButton.isHidden = true
+            self.redoButton.isHidden = false
+            self.saveButton.isHidden = false
         }
 
-        
-        photoButton.isHidden = true
-        redoButton.isHidden = false
-        saveButton.isHidden = false
     }
     
     func drawControls() {

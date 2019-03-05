@@ -16,47 +16,55 @@
     let argThreshold = command.arguments[5] as? NSNumber ?? 0.0
     let argSmoothing = command.arguments[6] as? NSNumber ?? 0.0
     
-    ckcviewController = ChromaKeyCameraViewController()
     
-    switch argMode {
-    case "video":
-        ckcviewController!.mode = .video
-    case "photo":
-        ckcviewController!.mode = .photo
-    default:
-        returnError(message: "invalid mode")
-        return
+    UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
+    
+    DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
+    
+        self.ckcviewController = ChromaKeyCameraViewController()
+    
+        switch argMode {
+        case "video":
+            self.ckcviewController!.mode = .video
+        case "photo":
+            self.ckcviewController!.mode = .photo
+        default:
+            self.returnError(message: "invalid mode")
+            return
+        }
+    
+        switch argBackgroundMode {
+        case "video":
+            self.ckcviewController!.backgroundMode = .video
+            self.ckcviewController!.backgroundVideoURL = argBackgroundVideo
+        case "photo":
+            self.ckcviewController!.backgroundMode = .photo
+            self.ckcviewController!.backgroundPhotoURL = argBackgroundPhoto
+        default:
+            self.returnError(message: "invalid background mode")
+            return
+        }
+    
+        switch argColor {
+        case "red":
+            self.ckcviewController!.color = .red
+        case "blue":
+            self.ckcviewController!.color = .blue
+        case "green":
+            self.ckcviewController!.color = .green
+        default:
+            self.returnError(message: "invalid color")
+            return
+        }
+    
+        self.ckcviewController!.threshold = argThreshold.floatValue
+        self.ckcviewController!.smoothing = argSmoothing.floatValue
+    
+        self.ckcviewController!.delegate = self
+
+        self.viewController.present(self.ckcviewController!, animated: true, completion: nil)
     }
-    
-    switch argBackgroundMode {
-    case "video":
-        ckcviewController!.backgroundMode = .video
-        ckcviewController!.backgroundVideoURL = argBackgroundVideo
-    case "photo":
-        ckcviewController!.backgroundMode = .photo
-        ckcviewController!.backgroundPhotoURL = argBackgroundPhoto
-    default:
-        returnError(message: "invalid background mode")
-        return
-    }
-    
-    switch argColor {
-    case "red":
-        ckcviewController!.color = .red
-    case "blue":
-        ckcviewController!.color = .blue
-    case "green":
-        ckcviewController!.color = .green
-    default:
-        returnError(message: "invalid color")
-        return
-    }
-    
-    ckcviewController!.threshold = argThreshold.floatValue
-    ckcviewController!.smoothing = argSmoothing.floatValue
-    
-    ckcviewController!.delegate = self
-    self.viewController.present(ckcviewController!, animated: true, completion: nil)
+
   }
     
   func returnError(message: String) {
