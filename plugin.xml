@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-chromakeycamera" version="0.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+  <name>ChromaKeyCamera</name>
+  <js-module name="ChromaKeyCamera" src="www/ChromaKeyCamera.js">
+    <clobbers target="cordova.plugins.ChromaKeyCamera" />
+  </js-module>
+  <platform name="ios">
+    <config-file target="config.xml" parent="/*">
+      <feature name="ChromaKeyCamera">
+        <param name="ios-package" value="ChromaKeyCamera" />
+      </feature>
+    </config-file>
+    <source-file src="src/ios/ChromaKeyCamera.swift" />
+    <source-file src="src/ios/ChromaKeyCameraViewController.swift" />
+    <resource-file src="res/accept.png" target="accept.png" />
+    <resource-file src="res/close.png" target="close.png" />
+    <resource-file src="res/record.png" target="record.png" />
+    <resource-file src="res/recordrewind.png" target="recordrewind.png" />
+    <resource-file src="res/recordstop.png" target="recordstop.png" />
+    <resource-file src="res/redo.png" target="redo.png" />
+  </platform>
+</plugin>
