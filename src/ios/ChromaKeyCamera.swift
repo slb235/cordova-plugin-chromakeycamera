@@ -22,6 +22,8 @@
     DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(100)) {
     
         self.ckcviewController = ChromaKeyCameraViewController()
+        
+        self.ckcviewController!.modalPresentationStyle = .fullScreen
     
         switch argMode {
         case "video":

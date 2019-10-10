@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-chromakeycamera",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Chromakey camera for cordova using gpuimage2.",
   "main": "index.js",
   "scripts": {
