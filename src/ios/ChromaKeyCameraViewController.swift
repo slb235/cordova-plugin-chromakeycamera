@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import GPUImage
+import ABGPUImage
 import AVFoundation
 import AVKit
 

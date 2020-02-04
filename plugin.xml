@@ -18,6 +18,6 @@
     <resource-file src="res/recordrewind.png" target="recordrewind.png" />
     <resource-file src="res/recordstop.png" target="recordstop.png" />
     <resource-file src="res/redo.png" target="redo.png" />
-    <framework src="EVGPUImage2" type="podspec" spec="~> 0.2.0" />
+    <framework src="ABGPUImage2" type="podspec" spec="~> 0.1.0" />
   </platform>
 </plugin>
